@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>播放器</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #1e1e2f, #0f0f1a);
+            --player-bg: rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff;
+            --text-sub: #a0a0b0;
+            --theme-color: #1db954;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-main);
+        }
+
+        /* 播放器主容器 */
+        .player-container {
+            background: var(--player-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 30px;
+            width: 380px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        /* 歌曲信息与封面 */
+        .track-info {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .cover-art {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            background: #282828;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            animation: rotate 20s linear infinite;
+            animation-play-state: paused;
+        }
+
+        .title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .artist {
+            font-size: 14px;
+            color: var(--text-sub);
+        }
+
+        /* 歌词面板 */
+        .lyrics-panel {
+            height: 60px;
+            overflow: hidden;
+            margin-bottom: 25px;
+            position: relative;
+            text-align: center;
+        }
+
+        .lyrics-container {
+            transition: transform 0.3s ease-out;
+        }
+
+        .lyric-line {
+            font-size: 14px;
+            color: var(--text-sub);
+            height: 30px;
+            line-height: 30px;
+            transition: color 0.3s, font-size 0.3s;
+        }
+
+        .lyric-line.active {
+            color: var(--theme-color);
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        /* 进度条控制 */
+        .progress-area {
+            margin-bottom: 25px;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .progress-filled {
+            height: 100%;
+            width: 0%;
+            background: var(--theme-color);
+            border-radius: 3px;
+            position: relative;
+        }
+
+        .time-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-top: 8px;
+        }
+
+        /* 播放控制按钮 */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .btn {
+            background: none;
+            border: none;
+            color: var(--text-main);
+            cursor: pointer;
+            font-size: 18px;
+            transition: color 0.2s;
+        }
+
+        .btn:hover {
+            color: var(--theme-color);
+        }
+
+        .btn-toggle {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--text-main);
+            color: #0f0f1a;
+            font-size: 22px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-toggle:hover {
+            background: var(--theme-color);
+            color: #ffffff;
+            transform: scale(1.05);
+        }
+
+        /* 旋转动画 */
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="player-container">
+        <audio id="main-audio" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" preload="metadata"></audio>
+
+        <div class="track-info">
+            <div class="cover-art" id="cover-art">🎵</div>
+            <div class="title" id="track-title">SoundHelix-Song-1</div>
+            <div class="artist" id="track-artist">SoundHelix</div>
+        </div>
+
+        <div class="lyrics-panel">
+            <div class="lyrics-container" id="lyrics-container">
+                <div class="lyric-line active" data-time="0">欢迎使用原生音乐播放器</div>
+                <div class="lyric-line" data-time="5">流畅的音频解码与分段加载</div>
+                <div class="lyric-line" data-time="15">极简现代的交互设计</div>
+                <div class="lyric-line" data-time="30">尽情享受你的数字音乐</div>
+            </div>
+        </div>
+
+        <div class="progress-area">
+            <div class="progress-bar" id="progress-bar">
+                <div class="progress-filled" id="progress-filled"></div>
+            </div>
+            <div class="time-info">
+                <span id="current-time">00:00</span>
+                <span id="duration-time">00:00</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="btn-prev">⏮</button>
+            <button class="btn btn-toggle" id="btn-toggle">▶</button>
+            <button class="btn" id="btn-next">⏭</button>
+        </div>
+    </div>
+
+    <script>
+        const audio = document.getElementById('main-audio');
+        const btnToggle = document.getElementById('btn-toggle');
+        const progressBar = document.getElementById('progress-bar');
+        const progressFilled = document.getElementById('progress-filled');
+        const currentTimeEl = document.getElementById('current-time');
+        const durationTimeEl = document.getElementById('duration-time');
+        const coverArt = document.getElementById('cover-art');
+        const lyricLines = document.querySelectorAll('.lyric-line');
+        const lyricsContainer = document.getElementById('lyrics-container');
+
+        // 格式化时间函数
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "00:00";
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // 切换播放与暂停状态
+        function togglePlay() {
+            if (audio.paused) {
+                audio.play();
+                btnToggle.innerText = '⏸';
+                coverArt.style.animationPlayState = 'running';
+            } else {
+                audio.pause();
+                btnToggle.innerText = '▶';
+                coverArt.style.animationPlayState = 'paused';
+            }
+        }
+
+        // 监听音频总时长加载
+        audio.addEventListener('loadedmetadata', () => {
+            durationTimeEl.innerText = formatTime(audio.duration);
+        });
+
+        // 监听播放进度更新
+        audio.addEventListener('timeupdate', () => {
+            const current = audio.currentTime;
+            const duration = audio.duration;
+            
+            // 更新时间文本与进度条位置
+            currentTimeEl.innerText = formatTime(current);
+            if (duration) {
+                const percentage = (current / duration) * 100;
+                progressFilled.style.width = `${percentage}%`;
+            }
+
+            // 基础歌词同步逻辑
+            let activeIndex = 0;
+            lyricLines.forEach((line, index) => {
+                const time = parseFloat(line.getAttribute('data-time'));
+                if (current >= time) {
+                    activeIndex = index;
+                }
+            });
+
+            lyricLines.forEach((line, index) => {
+                if (index === activeIndex) {
+                    line.classList.add('active');
+                } else {
+                    line.classList.remove('active');
+                }
+            });
+            // 每行歌词高度 30px，向上平移实现滚动
+            lyricsContainer.style.transform = `translateY(-${activeIndex * 30}px)`;
+        });
+
+        // 点击进度条跳转播放位置
+        progressBar.addEventListener('click', (e) => {
+            const rect = progressBar.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const width = rect.width;
+            const duration = audio.duration;
+            if (duration) {
+                audio.currentTime = (clickX / width) * duration;
+            }
+        });
+
+        // 绑定按钮事件
+        btnToggle.addEventListener('click', togglePlay);
+    </script>
+</body>
+</html>
